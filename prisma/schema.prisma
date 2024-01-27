@@ -12,7 +12,13 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
+  id    Int    @id @default(autoincrement())
+  email String @unique
   name  String
+}
+
+model Service {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  price Float  @unique
 }
