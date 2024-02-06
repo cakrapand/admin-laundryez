@@ -11,14 +11,77 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id    Int    @id @default(autoincrement())
-  email String @unique
-  name  String
+model UserCredential {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  userProfile UserProfile?
+}
+
+model UserProfile {
+  id               String   @id @default(uuid())
+  userCredentialId String   @unique
+  name             String
+  address          String
+  phone            String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now())
+
+  userCredential UserCredential @relation(fields: [userCredentialId], references: [id])
 }
 
 model Service {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  price Float  @unique
+  id        String   @id @default(uuid())
+  name      String   @unique
+  price     Float
+  duration  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  Order Order[]
+}
+
+enum OrderStatus {
+  PAYMENT
+  PICKED_UP
+  ON_PROGRESS
+  ON_DELIVER
+  DONE
+  CANCEL
+}
+
+model Order {
+  id               String       @id @default(uuid())
+  userCredentialId String
+  serviceId        String
+  quantity         Float
+  transcation      Transaction?
+  redirectUrl      String       @unique
+  orderStatus      OrderStatus  @default(PAYMENT)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @default(now())
+
+  userCredential UserCredential @relation(fields: [userCredentialId], references: [id])
+  service        Service        @relation(fields: [serviceId], references: [id])
+}
+
+enum TransactionStatus {
+  PENDING
+  FAILURE
+  SUCCESS
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  orderId           String            @unique
+  amount            Float
+  transactionStatus TransactionStatus @default(PENDING)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
 }
