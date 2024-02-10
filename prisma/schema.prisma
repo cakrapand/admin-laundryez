@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,26 +9,34 @@ datasource db {
 }
 
 model UserCredential {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  orders    Order[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-
+  id          String       @id @default(uuid())
+  email       String       @unique
+  password    String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now())
+  orders      Order[]
   userProfile UserProfile?
 }
 
 model UserProfile {
-  id               String   @id @default(uuid())
-  userCredentialId String   @unique
+  id               String         @id @default(uuid())
+  userCredentialId String         @unique
   name             String
   address          String
   phone            String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @default(now())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now())
+  userCredential   UserCredential @relation(fields: [userCredentialId], references: [id])
+}
 
-  userCredential UserCredential @relation(fields: [userCredentialId], references: [id])
+model Admin {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  password     String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+  isSuperAdmin Boolean  @default(false)
 }
 
 model Service {
@@ -41,8 +46,31 @@ model Service {
   duration  Float
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+  Order     Order[]
+}
 
-  Order Order[]
+model Order {
+  id               String         @id @default(uuid())
+  userCredentialId String
+  serviceId        String
+  quantity         Float
+  redirectUrl      String         @unique
+  orderStatus      OrderStatus    @default(PAYMENT)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now())
+  service          Service        @relation(fields: [serviceId], references: [id])
+  userCredential   UserCredential @relation(fields: [userCredentialId], references: [id])
+  transcation      Transaction?
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  orderId           String            @unique
+  amount            Float
+  transactionStatus TransactionStatus @default(PENDING)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @default(now())
+  order             Order             @relation(fields: [orderId], references: [id])
 }
 
 enum OrderStatus {
@@ -54,34 +82,8 @@ enum OrderStatus {
   CANCEL
 }
 
-model Order {
-  id               String       @id @default(uuid())
-  userCredentialId String
-  serviceId        String
-  quantity         Float
-  transcation      Transaction?
-  redirectUrl      String       @unique
-  orderStatus      OrderStatus  @default(PAYMENT)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @default(now())
-
-  userCredential UserCredential @relation(fields: [userCredentialId], references: [id])
-  service        Service        @relation(fields: [serviceId], references: [id])
-}
-
 enum TransactionStatus {
   PENDING
   FAILURE
   SUCCESS
-}
-
-model Transaction {
-  id                String            @id @default(uuid())
-  orderId           String            @unique
-  amount            Float
-  transactionStatus TransactionStatus @default(PENDING)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @default(now())
-
-  order Order @relation(fields: [orderId], references: [id])
 }
